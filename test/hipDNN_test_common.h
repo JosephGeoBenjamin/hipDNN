@@ -46,7 +46,7 @@ public:
     Memory(int numElements) {
         num_of_items = numElements;
         mem_size = sizeof(dataType) * numElements;
-        hVec[numElements];
+        hVec.reserve(num_of_items);
         this->h_data = (dataType*)malloc(mem_size);
         HIP_CALL(hipMalloc(&this->d_data, mem_size));
 
@@ -72,6 +72,18 @@ public:
         free(h_data);
         HIP_CALL(hipFree(d_data));
     }
+    void printCPUMemory(){
+        for(int i = 0; i < num_of_items; i++)
+             std::cout << h_data[i] << std::endl;
+    }
+    void printGPUMemory(){
+        dataType* temp = new dataType[num_of_items];
+        hipMemcpy(temp, d_data, mem_size, hipMemcpyDeviceToHost);
+        for(int i = 0; i < num_of_items; i++){
+            std::cout << temp[i] << std::endl;
+        }
+        delete temp;
+    }
 };
 
 
@@ -92,7 +104,7 @@ Memory<dataType> createMemory(Desc desc) {
 }
 
 template<typename dataType>
-bool Equals(Memory<dataType> &A, Memory<dataType> &B) {
+void Equals(Memory<dataType> &A, Memory<dataType> &B) {
     // Memcpy the device results to host buffer
     HIP_CALL(hipMemcpy(B.cpu(), B.gpu(), B.size(), hipMemcpyDeviceToHost));
     assert(A.size()==B.size());
